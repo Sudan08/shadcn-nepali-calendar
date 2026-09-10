@@ -41,7 +41,7 @@
       "type": "registry:component",
       "title": "Nepali Calendar",
       "description": "A Bikram Sambat calendar built on React DayPicker, styled to match shadcn/ui's Calendar. selected/onSelect stay plain JS Dates - only the rendered grid, labels, and navigation are BS.",
-      "registryDependencies": ["button", "nepali-calendar-core"],
+      "registryDependencies": ["button", "Sudan08/shadcn-nepali-calendar/nepali-calendar-core"],
       "dependencies": ["react-day-picker", "date-fns", "lucide-react"],
       "files": [
         {
