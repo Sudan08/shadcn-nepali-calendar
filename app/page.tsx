@@ -27,18 +27,22 @@ function GitHubIcon(props: React.SVGProps<SVGSVGElement>) {
   )
 }
 
-function CopyableCode({ children }: { children: string }) {
+function useCopy(text: string) {
   const [copied, setCopied] = React.useState(false)
-
-  async function copy() {
+  const copy = React.useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(children)
+      await navigator.clipboard.writeText(text)
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     } catch {
       // clipboard access denied - nothing to fall back to
     }
-  }
+  }, [text])
+  return { copied, copy }
+}
+
+function CopyableCode({ children }: { children: string }) {
+  const { copied, copy } = useCopy(children)
 
   return (
     <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-2.5 font-mono text-xs sm:text-sm">
@@ -46,6 +50,26 @@ function CopyableCode({ children }: { children: string }) {
       <Button variant="outline" size="sm" onClick={copy} className="shrink-0">
         {copied ? "Copied" : "Copy"}
       </Button>
+    </div>
+  )
+}
+
+function CodeBlock({ code }: { code: string }) {
+  const { copied, copy } = useCopy(code)
+
+  return (
+    <div className="relative mt-3 rounded-lg border bg-muted/40">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={copy}
+        className="absolute top-2 right-2"
+      >
+        {copied ? "Copied" : "Copy"}
+      </Button>
+      <pre className="overflow-x-auto p-3 pr-20 text-xs leading-relaxed">
+        <code className="font-mono">{code.trim()}</code>
+      </pre>
     </div>
   )
 }
@@ -66,10 +90,12 @@ function HolidayDayButton(props: React.ComponentProps<typeof DayButton>) {
 function Section({
   title,
   description,
+  code,
   children,
 }: {
   title: string
   description?: string
+  code?: string
   children: React.ReactNode
 }) {
   return (
@@ -81,9 +107,100 @@ function Section({
         )}
       </div>
       <div className="rounded-lg border p-3">{children}</div>
+      {code && <CodeBlock code={code} />}
     </section>
   )
 }
+
+const SINGLE_CODE = `
+const [date, setDate] = useState<Date>()
+
+<NepaliCalendar mode="single" selected={date} onSelect={setDate} />
+`
+
+const ENGLISH_LOCALE_CODE = `
+<NepaliCalendar
+  mode="single"
+  selected={date}
+  onSelect={setDate}
+  locale="en"
+/>
+`
+
+const RANGE_CODE = `
+const [range, setRange] = useState<DateRange>()
+
+<NepaliCalendar mode="range" selected={range} onSelect={setRange} />
+`
+
+const DROPDOWN_CODE = `
+import { nepaliDate } from "@/lib/nepali-calendar-core"
+
+<NepaliCalendar
+  mode="single"
+  selected={date}
+  onSelect={setDate}
+  captionLayout="dropdown"
+  startMonth={nepaliDate(2060, 1, 1)}  // BS 2060 Baisakh 1
+  endMonth={nepaliDate(2090, 12, 1)}   // BS 2090 Chaitra
+/>
+`
+
+const CUSTOM_DAY_CODE = `
+import type { DayButton } from "react-day-picker"
+import { NepaliCalendar, NepaliCalendarDayButton } from "@/components/ui/nepali-calendar"
+import { adToBs } from "@/lib/nepali-calendar-core"
+
+// BS "year-month-day" keys, month 0-indexed (0 = Baisakh).
+const holidays = new Set(["2083-4-10", "2083-4-20", "2083-4-25"])
+
+function HolidayDayButton(props: React.ComponentProps<typeof DayButton>) {
+  const bs = adToBs(props.day.date)
+  const isHoliday = holidays.has(\`\${bs.year}-\${bs.month}-\${bs.day}\`)
+  return (
+    <NepaliCalendarDayButton {...props}>
+      {props.children}
+      {isHoliday && (
+        <span className="absolute bottom-1 left-1/2 size-1 -translate-x-1/2 rounded-full bg-destructive" />
+      )}
+    </NepaliCalendarDayButton>
+  )
+}
+
+<NepaliCalendar
+  mode="single"
+  selected={date}
+  onSelect={setDate}
+  components={{ DayButton: HolidayDayButton }}
+/>
+`
+
+const POPOVER_CODE = `
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Button } from "@/components/ui/button"
+import { NepaliCalendar } from "@/components/ui/nepali-calendar"
+
+function DatePicker() {
+  const [date, setDate] = useState<Date>()
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline">{date ? date.toDateString() : "Pick a date"}</Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0">
+        <NepaliCalendar mode="single" selected={date} onSelect={setDate} />
+      </PopoverContent>
+    </Popover>
+  )
+}
+`
+
+const ISO_STRING_CODE = `
+import { adToBsIsoString, bsIsoStringToAd } from "@/lib/nepali-calendar-core"
+
+adToBsIsoString(date)          // Date -> "2082-05-06" (BS, zero-padded YYYY-MM-DD)
+bsIsoStringToAd("2082-05-06")  // "2082-05-06" -> Date, e.g. to seed \`selected\` from a saved value
+`
 
 const PROP_ROWS: {
   prop: string
@@ -166,8 +283,13 @@ const PROP_ROWS: {
 ]
 
 export default function Home() {
-  const [single, setSingle] = React.useState<Date | undefined>(new Date())
+  // Each demo below gets its own state - sharing one Date between sections
+  // made selecting in one calendar visibly move the selection in the others.
+  const [singleDate, setSingleDate] = React.useState<Date | undefined>(new Date())
+  const [englishDate, setEnglishDate] = React.useState<Date | undefined>(new Date())
   const [range, setRange] = React.useState<DateRange | undefined>()
+  const [dropdownDate, setDropdownDate] = React.useState<Date | undefined>(new Date())
+  const [customDayDate, setCustomDayDate] = React.useState<Date | undefined>(new Date())
   const [popoverDate, setPopoverDate] = React.useState<Date | undefined>()
   const [savedBsDate, setSavedBsDate] = React.useState("2082-05-06")
   const [loadedDate, setLoadedDate] = React.useState<Date | undefined>()
@@ -206,23 +328,26 @@ export default function Home() {
       </header>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-        <Section title="Single (Nepali locale, Devanagari numerals - defaults)">
-          <NepaliCalendar mode="single" selected={single} onSelect={setSingle} />
+        <Section
+          title="Single (Nepali locale, Devanagari numerals - defaults)"
+          code={SINGLE_CODE}
+        >
+          <NepaliCalendar mode="single" selected={singleDate} onSelect={setSingleDate} />
           <p className="mt-2 text-xs text-muted-foreground">
-            selected (AD): {single?.toDateString() ?? "none"}
+            selected (AD): {singleDate?.toDateString() ?? "none"}
           </p>
         </Section>
 
-        <Section title="English locale, Latin numerals">
+        <Section title="English locale, Latin numerals" code={ENGLISH_LOCALE_CODE}>
           <NepaliCalendar
             mode="single"
-            selected={single}
-            onSelect={setSingle}
+            selected={englishDate}
+            onSelect={setEnglishDate}
             locale="en"
           />
         </Section>
 
-        <Section title="Range selection">
+        <Section title="Range selection" code={RANGE_CODE}>
           <NepaliCalendar mode="range" selected={range} onSelect={setRange} />
           <p className="mt-2 text-xs text-muted-foreground">
             {range?.from?.toDateString() ?? "..."} -{" "}
@@ -230,27 +355,33 @@ export default function Home() {
           </p>
         </Section>
 
-        <Section title="Dropdown navigation (month/year, bounded 2060-2090 BS)">
+        <Section
+          title="Dropdown navigation (month/year, bounded 2060-2090 BS)"
+          code={DROPDOWN_CODE}
+        >
           <NepaliCalendar
             mode="single"
-            selected={single}
-            onSelect={setSingle}
+            selected={dropdownDate}
+            onSelect={setDropdownDate}
             captionLayout="dropdown"
             startMonth={nepaliDate(2060, 1, 1)}
             endMonth={nepaliDate(2090, 12, 1)}
           />
         </Section>
 
-        <Section title="Custom day content (NepaliCalendarDayButton composed with a holiday dot)">
+        <Section
+          title="Custom day content (NepaliCalendarDayButton composed with a holiday dot)"
+          code={CUSTOM_DAY_CODE}
+        >
           <NepaliCalendar
             mode="single"
-            selected={single}
-            onSelect={setSingle}
+            selected={customDayDate}
+            onSelect={setCustomDayDate}
             components={{ DayButton: HolidayDayButton }}
           />
         </Section>
 
-        <Section title="Popover date picker">
+        <Section title="Popover date picker" code={POPOVER_CODE}>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline">
@@ -271,14 +402,15 @@ export default function Home() {
       <Section
         title="Sending/loading a BS date as YYYY-MM-DD"
         description="adToBsIsoString / bsIsoStringToAd convert at the boundary - an API payload, a form field, a DB column - while selected/onSelect stay plain AD Dates."
+        code={ISO_STRING_CODE}
       >
         <div className="flex flex-col gap-4">
           <div>
             <p className="text-xs text-muted-foreground">
-              adToBsIsoString(single):
+              adToBsIsoString(singleDate):
             </p>
             <code className="text-sm font-medium">
-              {single ? adToBsIsoString(single) : "none"}
+              {singleDate ? adToBsIsoString(singleDate) : "none"}
             </code>
           </div>
 
