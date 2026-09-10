@@ -93,6 +93,43 @@ function DatePicker() {
 }
 ```
 
+### Custom day content (`NepaliCalendarDayButton`)
+
+`NepaliCalendar` renders each day cell with `NepaliCalendarDayButton` - a shadcn `Button` wired up with DayPicker's focus/selection behavior (arrow-key focus, and `data-selected-single`/`data-range-start`/`data-range-end`/`data-range-middle` attributes that drive the selection styling). It's exported so you can wrap it to add content to each cell (a holiday dot, an event badge, ...) without losing that behavior or rebuilding the styling from scratch.
+
+Swap it in via DayPicker's own `components` prop, and use `adToBs` from `nepali-calendar-core` to key your content off the BS date:
+
+```tsx
+import type { DayButton } from "react-day-picker"
+import { NepaliCalendar, NepaliCalendarDayButton } from "@/components/ui/nepali-calendar"
+import { adToBs } from "@/lib/nepali-calendar-core"
+
+// BS "year-month-day" keys, month 0-indexed (0 = Baisakh).
+const holidays = new Set(["2083-4-10", "2083-4-20", "2083-4-25"])
+
+function HolidayDayButton(props: React.ComponentProps<typeof DayButton>) {
+  const bs = adToBs(props.day.date)
+  const isHoliday = holidays.has(`${bs.year}-${bs.month}-${bs.day}`)
+  return (
+    <NepaliCalendarDayButton {...props}>
+      {props.children}
+      {isHoliday && (
+        <span className="absolute bottom-1 left-1/2 size-1 -translate-x-1/2 rounded-full bg-destructive" />
+      )}
+    </NepaliCalendarDayButton>
+  )
+}
+
+<NepaliCalendar
+  mode="single"
+  selected={date}
+  onSelect={setDate}
+  components={{ DayButton: HolidayDayButton }}
+/>
+```
+
+`props.children` is the already-formatted BS day number (from `dateLib.format`) - render it as-is and add your own content alongside it, rather than replacing it. See `app/page.tsx` for this running live.
+
 ## Why a `DateLib` adapter, not a new component
 
 shadcn's Persian calendar works by swapping `react-day-picker`'s date engine (via the `dateLib` prop, backed by `date-fns-jalali`) while keeping the same `Calendar` UI. There's no equivalent `date-fns-nepali`, so `nepali-calendar-core` implements the same seam by hand:

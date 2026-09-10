@@ -1,16 +1,33 @@
 "use client"
 
 import * as React from "react"
-import type { DateRange } from "react-day-picker"
+import type { DayButton, DateRange } from "react-day-picker"
 
-import { NepaliCalendar } from "@/components/ui/nepali-calendar"
-import { nepaliDate } from "@/lib/nepali-calendar-core"
+import { NepaliCalendar, NepaliCalendarDayButton } from "@/components/ui/nepali-calendar"
+import { adToBs, nepaliDate } from "@/lib/nepali-calendar-core"
 import { Button } from "@/components/ui/button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+
+// BS "year-month-day" keys, month 0-indexed (0 = Baisakh) to match adToBs().
+// Bhadra = index 4.
+const holidays = new Set(["2083-4-10", "2083-4-20", "2083-4-25"])
+
+function HolidayDayButton(props: React.ComponentProps<typeof DayButton>) {
+  const bs = adToBs(props.day.date)
+  const isHoliday = holidays.has(`${bs.year}-${bs.month}-${bs.day}`)
+  return (
+    <NepaliCalendarDayButton {...props}>
+      {props.children}
+      {isHoliday && (
+        <span className="absolute bottom-1 left-1/2 size-1 -translate-x-1/2 rounded-full bg-destructive" />
+      )}
+    </NepaliCalendarDayButton>
+  )
+}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -69,6 +86,15 @@ export default function Home() {
             captionLayout="dropdown"
             startMonth={nepaliDate(2060, 1, 1)}
             endMonth={nepaliDate(2090, 12, 1)}
+          />
+        </Section>
+
+        <Section title="Custom day content (NepaliCalendarDayButton composed with a holiday dot)">
+          <NepaliCalendar
+            mode="single"
+            selected={single}
+            onSelect={setSingle}
+            components={{ DayButton: HolidayDayButton }}
           />
         </Section>
 
