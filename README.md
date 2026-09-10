@@ -10,7 +10,7 @@ A Bikram Sambat (BS) calendar for [shadcn/ui](https://ui.shadcn.com), built the 
 ## Install
 
 ```bash
-pnpm dlx shadcn@latest add https://github.com/sudanshakya08/shadcn-nepali-calendar/nepali-calendar
+pnpm dlx shadcn@latest add https://github.com/Sudan08/shadcn-nepali-calendar/nepali-calendar
 ```
 
 This pulls in two registry items:

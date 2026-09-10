@@ -1,7 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
   "name": "shadcn-nepali-calendar",
-  "homepage": "https://github.com/sudanshakya08/shadcn-nepali-calendar",
+  "homepage": "https://github.com/Sudan08/shadcn-nepali-calendar",
   "items": [
     {
       "name": "nepali-calendar-core",
