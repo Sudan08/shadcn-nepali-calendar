@@ -130,6 +130,19 @@ function HolidayDayButton(props: React.ComponentProps<typeof DayButton>) {
 
 `props.children` is the already-formatted BS day number (from `dateLib.format`) - render it as-is and add your own content alongside it, rather than replacing it. See `app/page.tsx` for this running live.
 
+### Sending/storing a date as `YYYY-MM-DD` (BS)
+
+`selected`/`onSelect` are plain AD `Date`s, so when you need to send or store the *Nepali* date - an API payload, a form field, a database column - convert at the boundary with `adToBsIsoString`/`bsIsoStringToAd` from `nepali-calendar-core`:
+
+```tsx
+import { adToBsIsoString, bsIsoStringToAd } from "@/lib/nepali-calendar-core"
+
+adToBsIsoString(date)          // Date -> "2082-05-06" (BS, zero-padded YYYY-MM-DD)
+bsIsoStringToAd("2082-05-06")  // "2082-05-06" -> Date, e.g. to seed `selected` from a saved value
+```
+
+`bsIsoStringToAd` throws on a malformed string rather than silently clamping, so validate/guard it the same way you would `new Date(str)` on untrusted input.
+
 ## Why a `DateLib` adapter, not a new component
 
 shadcn's Persian calendar works by swapping `react-day-picker`'s date engine (via the `dateLib` prop, backed by `date-fns-jalali`) while keeping the same `Calendar` UI. There's no equivalent `date-fns-nepali`, so `nepali-calendar-core` implements the same seam by hand:

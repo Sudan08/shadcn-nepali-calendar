@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest"
 
 import {
   adToBs,
+  adToBsIsoString,
+  bsIsoStringToAd,
   bsToAd,
   daysInBsMonth,
   MAX_BS_YEAR,
@@ -66,6 +68,25 @@ describe("round-trip conversion across the whole supported range", () => {
       expect(isNextDay || isNextMonth).toBe(true)
       prevBs = bs
     }
+  })
+})
+
+describe("BS ISO string round-trip", () => {
+  it("formats AD 2025-04-14 as BS 2082-01-01", () => {
+    expect(adToBsIsoString(new Date(2025, 3, 14))).toBe("2082-01-01")
+  })
+
+  it("pads single-digit months/days", () => {
+    expect(adToBsIsoString(bsToAd(2082, 4, 6))).toBe("2082-05-06")
+  })
+
+  it("parses back to the same AD date", () => {
+    expect(bsIsoStringToAd("2082-05-06")).toEqual(bsToAd(2082, 4, 6))
+  })
+
+  it("throws on a malformed string", () => {
+    expect(() => bsIsoStringToAd("2082-5-6")).toThrow()
+    expect(() => bsIsoStringToAd("not-a-date")).toThrow()
   })
 })
 

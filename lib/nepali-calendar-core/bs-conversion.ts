@@ -75,6 +75,27 @@ export function adToBs(date: Date): BsDate {
   return { year, month, day: remaining + 1 }
 }
 
+function pad(value: number, length: number): string {
+  return String(value).padStart(length, "0")
+}
+
+/** Formats an AD `Date` as its Bikram Sambat equivalent, `YYYY-MM-DD` (month 01-12). */
+export function adToBsIsoString(date: Date): string {
+  const { year, month, day } = adToBs(date)
+  return `${pad(year, 4)}-${pad(month + 1, 2)}-${pad(day, 2)}`
+}
+
+/**
+ * Parses a `YYYY-MM-DD` Bikram Sambat string (month 01-12, as produced by
+ * {@link adToBsIsoString}) back into an AD `Date`.
+ */
+export function bsIsoStringToAd(value: string): Date {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) throw new Error(`Invalid BS date string: "${value}" (expected YYYY-MM-DD)`)
+  const [, year, month, day] = match
+  return bsToAd(Number(year), Number(month) - 1, Number(day))
+}
+
 /**
  * Converts a Bikram Sambat date to its Gregorian (AD) equivalent.
  *
