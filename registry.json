@@ -1,0 +1,54 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "shadcn-nepali-calendar",
+  "homepage": "https://github.com/sudanshakya08/shadcn-nepali-calendar",
+  "items": [
+    {
+      "name": "nepali-calendar-core",
+      "type": "registry:lib",
+      "title": "Nepali Calendar Core",
+      "description": "Framework-agnostic Bikram Sambat (BS) calendar engine: BS/AD conversion, month-length data, and a react-day-picker DateLib adapter. No UI - used by the nepali-calendar component.",
+      "dependencies": ["react-day-picker"],
+      "files": [
+        {
+          "path": "lib/nepali-calendar-core/bs-calendar-data.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "lib/nepali-calendar-core/bs-conversion.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "lib/nepali-calendar-core/bs-locale.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "lib/nepali-calendar-core/bs-format.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "lib/nepali-calendar-core/bs-date-lib.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "lib/nepali-calendar-core/index.ts",
+          "type": "registry:lib"
+        }
+      ]
+    },
+    {
+      "name": "nepali-calendar",
+      "type": "registry:component",
+      "title": "Nepali Calendar",
+      "description": "A Bikram Sambat calendar built on React DayPicker, styled to match shadcn/ui's Calendar. selected/onSelect stay plain JS Dates - only the rendered grid, labels, and navigation are BS.",
+      "registryDependencies": ["button", "nepali-calendar-core"],
+      "dependencies": ["react-day-picker", "date-fns", "lucide-react"],
+      "files": [
+        {
+          "path": "components/ui/nepali-calendar.tsx",
+          "type": "registry:component"
+        }
+      ]
+    }
+  ]
+}
